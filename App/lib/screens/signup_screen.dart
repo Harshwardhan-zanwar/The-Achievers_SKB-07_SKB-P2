@@ -46,6 +46,15 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
+  void _handleSocialAuth() {
+    // Instantly bypasses form verification for Google/Apple signups
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const MainShellScreen()),
+      (route) => false,
+    );
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -182,14 +191,14 @@ class _SignupScreenState extends State<SignupScreen> {
                             _buildSocialButton(
                               iconPath: 'G',
                               text: 'Sign up with Google',
-                              onTap: _handleSignup,
+                              onTap: _handleSocialAuth,
                               isGoogle: true,
                             ),
                             const SizedBox(height: 12),
                             _buildSocialButton(
                               iconPath: 'A',
                               text: 'Sign up with Apple',
-                              onTap: _handleSignup,
+                              onTap: _handleSocialAuth,
                               isGoogle: false,
                             ),
                           ],

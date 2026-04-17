@@ -41,6 +41,15 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  void _handleSocialAuth() {
+    // Instantly bypasses email verifications for Google/Apple signins
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const MainShellScreen()),
+      (route) => false,
+    );
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -162,14 +171,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             _buildSocialButton(
                               iconPath: 'G',
                               text: 'Continue with Google',
-                              onTap: _handleLogin,
+                              onTap: _handleSocialAuth,
                               isGoogle: true,
                             ),
                             const SizedBox(height: 12),
                             _buildSocialButton(
                               iconPath: 'A',
                               text: 'Continue with Apple',
-                              onTap: _handleLogin,
+                              onTap: _handleSocialAuth,
                               isGoogle: false,
                             ),
                           ],
