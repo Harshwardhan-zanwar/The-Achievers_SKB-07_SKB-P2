@@ -1,0 +1,26 @@
+# Pashu Rakshak - Python Dependencies
+
+# Core Backend (FastAPI)
+fastapi
+uvicorn
+python-dotenv
+python-multipart
+requests
+
+# Machine Learning & Data Science
+tensorflow
+numpy
+pillow
+scikit-learn
+tqdm
+
+# Speech & Intelligence
+openai-whisper
+# note: whisper also requires ffmpeg installed on the system
+
+# Visualization & Notebook Support
+matplotlib
+seaborn
+
+# Database & Infrastructure
+supabase
