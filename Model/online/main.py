@@ -6,7 +6,8 @@ from typing import Optional
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 
 # Import Local Logic
 from model_loader import get_model
@@ -43,6 +44,10 @@ app.add_middleware(
 
 # API Prefix
 API_PREFIX = "/api/v1"
+AUDIO_DIR = "static/audio"
+os.makedirs(AUDIO_DIR, exist_ok=True)
+
+app.mount("/audio", StaticFiles(directory=AUDIO_DIR), name="audio")
 
 # Initialize global instances lazily or on startup
 model = None
@@ -72,7 +77,7 @@ async def health():
 
 @app.post(f"{API_PREFIX}/predict")
 async def predict(
-    file: UploadFile = File(...),
+    file: Optional[UploadFile] = File(None),
     query: Optional[str] = Form(None),
     location_lat: Optional[float] = Form(None),
     location_lon: Optional[float] = Form(None),
@@ -86,11 +91,17 @@ async def predict(
         raise HTTPException(status_code=503, detail="Model or Intelligence Engine not loaded.")
 
     try:
-        logger.info(f"Received prediction request for file: {file.filename}")
-        image_bytes = await file.read()
+        # 1. Model Inference (Only if image provided)
+        disease_key = "Healthy_Cattle"
+        confidence = 0.95
+        top_k = []
+        status_msg = "Voice Consult"
         
-        # 1. Model Inference
-        disease_key, confidence, top_k, status_msg = model.predict(image_bytes)
+        if file and file.filename:
+            image_bytes = await file.read()
+            disease_key, confidence, top_k, status_msg = model.predict(image_bytes)
+        elif not query:
+             raise HTTPException(status_code=400, detail="Either image or voice query must be provided.")
         
         # 2. Intelligence Layer
         location = (location_lat, location_lon) if location_lat and location_lon else None

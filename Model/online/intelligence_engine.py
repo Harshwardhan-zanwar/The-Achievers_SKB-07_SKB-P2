@@ -10,8 +10,11 @@ NEW in v2:
   - All fields guaranteed internally consistent before returning
 """
 
+import os
+import json
 import datetime
 import requests
+import logging
 from typing import Optional, Tuple, Dict, Any, List
 from gemini_client import get_response
 
@@ -378,7 +381,6 @@ class IntelligenceEngine:
         elif "Anthrax" in disease_key:
             urgency_days = 1
             risk_percent = max(risk_percent, 85.0)
-
         if user_query:
             try:
                 # Use Gemini to refine the diagnosis based on voice context
@@ -404,6 +406,32 @@ class IntelligenceEngine:
             except Exception as e:
                 print(f"Gemini Fusion Error: {e}")
 
+        # ── Hindi Summary for Audio Explanation ──
+        hindi_summary = "आपकी गाय का स्वास्थ्य ठीक लग रहा है।" 
+        try:
+            translation_prompt = (
+                f"Summarize this cattle diagnosis in 2 sentences in Hindi (Devanagari script) for a farmer.\n"
+                f"Disease: {final_diagnosis}\n"
+                f"Urgency: {urgency_days} days\n"
+                f"Advice: {final_first_aid}\n\n"
+                "Keep it short, clear and encouraging. Talk directly to the farmer."
+            )
+            hindi_summary = get_response([{"role": "user", "content": translation_prompt}])
+        except Exception as e:
+            print(f"Translation Error: {e}")
+
+        # ── Audio Generation (gTTS) ──
+        audio_id = f"audio_{int(datetime.datetime.utcnow().timestamp())}"
+        audio_filename = f"{audio_id}.mp3"
+        try:
+             from gtts import gTTS
+             tts = gTTS(text=hindi_summary, lang='hi')
+             audio_path = os.path.join("static", "audio", audio_filename)
+             os.makedirs(os.path.dirname(audio_path), exist_ok=True)
+             tts.save(audio_path)
+        except Exception as tts_err:
+             print(f"TTS Error: {tts_err}")
+
         return {
             "disease":           final_diagnosis,
             "disease_key":       disease_key,
@@ -428,6 +456,8 @@ class IntelligenceEngine:
                 {"name": "Dr. Sharma's Cattle Care", "distance": "5.8 km", "contact": "98230XXXXX"}
             ],
 
+            "audio_summary_hi":  hindi_summary,
+            "audio_url":         f"/audio/{audio_filename}",
             "location": {
                 "lat": location[0] if location else None,
                 "lon": location[1] if location else None,
