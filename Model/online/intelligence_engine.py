@@ -10,11 +10,10 @@ NEW in v2:
   - All fields guaranteed internally consistent before returning
 """
 
-import json
-import os
 import datetime
 import requests
 from typing import Optional, Tuple, Dict, Any, List
+from gemini_client import get_response
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -309,6 +308,7 @@ class IntelligenceEngine:
         disease_key:                 str,
         confidence:                  float,
         location:                    Optional[Tuple[float, float]] = None,
+        user_query:                  Optional[str] = None,
         crop_area_acres:             float = 1.0,
         market_price_rs_per_quintal: float = 1500.0,
         top_k_predictions:           Optional[List[Dict]] = None,
@@ -336,7 +336,7 @@ class IntelligenceEngine:
         # Build raw result from protocols
         raw = self._build_raw_result(
             disease_key, confidence, protocol, location,
-            crop_area_acres, market_price_rs_per_quintal, top_k_predictions
+            crop_area_acres, market_price_rs_per_quintal, top_k_predictions, user_query
         )
 
         # Validate & correct for consistency
@@ -359,45 +359,80 @@ class IntelligenceEngine:
         area_acres:    float,
         market_price:  float,
         top_k:         Optional[List[Dict]],
+        user_query:    Optional[str] = None,
     ) -> Dict[str, Any]:
         economic = self._compute_economic_impact(protocol, area_acres, market_price)
         weather  = self._get_weather_advice(location, disease_key)
 
-        return {
-            # ── Layer 1 passthrough ───────────────
-            "disease":           protocol["display_name"],
-            "disease_key":       disease_key,
-            "crop":              protocol["crop"],
-            "confidence":        round(confidence * 100, 2),
-            "confidence_raw":    round(confidence, 6),
+        # ── AI Fusion Logic ──
+        final_diagnosis = protocol["display_name"]
+        final_first_aid = protocol["first_aid"]
+        final_action_plan = list(protocol["action_plan"])
+        
+        # Urgency & Risk Logic
+        risk_percent = round(confidence * 100, 1)
+        urgency_days = 3 # Default medium
+        if "Healthy" in disease_key:
+            urgency_days = 0 
+            risk_percent = 5.0 # Low noise
+        elif "Anthrax" in disease_key:
+            urgency_days = 1
+            risk_percent = max(risk_percent, 85.0)
 
-            # ── Layer 2 raw (pre-validation) ──────
-            "severity":          "",          # filled by validator
-            "severity_level":    "",          # filled by validator
-            "first_aid":         protocol["first_aid"],
-            "action_plan":       list(protocol["action_plan"]),  # copy
+        if user_query:
+            try:
+                # Use Gemini to refine the diagnosis based on voice context
+                prompt = (
+                    f"Cattle Scan Result: {disease_key} ({confidence*100:.1f}% confidence).\n"
+                    f"Farmer's Description: \"{user_query}\"\n\n"
+                    "As a Veterinary AI, analyze if the visual scan matches the description. "
+                    "Provide a refined diagnosis, treatment steps, and an urgency level (1-7 days). "
+                    "Keep it concise. Respond in JSON format: "
+                    "{\"refined_disease\": \"...\", \"advice\": \"...\", \"steps\": [\"...\"], \"urgency\": X}"
+                )
+                ai_refined_raw = get_response([{"role": "user", "content": prompt}])
+                # Simple cleanup if not pure JSON
+                if "```json" in ai_refined_raw:
+                    ai_refined_raw = ai_refined_raw.split("```json")[1].split("```")[0].strip()
+                
+                import json
+                ai_data = json.loads(ai_refined_raw)
+                final_diagnosis = ai_data.get("refined_disease", final_diagnosis)
+                final_first_aid = ai_data.get("advice", final_first_aid)
+                final_action_plan = ai_data.get("steps", final_action_plan)
+                urgency_days = ai_data.get("urgency", urgency_days)
+            except Exception as e:
+                print(f"Gemini Fusion Error: {e}")
+
+        return {
+            "disease":           final_diagnosis,
+            "disease_key":       disease_key,
+            "input_mode":        "Fusion (Vision + Voice)" if user_query else "Vision Only",
+            "confidence":        round(confidence * 100, 2),
+            "risk_percent":      risk_percent,
+            "urgency_days":      urgency_days,
+            
+            "first_aid":         final_first_aid,
+            "action_plan":       final_action_plan,
             "weather_advice":    weather,
 
-            # ── Economic (may be corrected by validator) ──
-            "yield_loss_pct":         protocol["yield_loss_pct"],
-            "economic_loss_rs":       economic["economic_loss_rs"],
-            "economic_loss_per_acre": economic["per_acre_rs"],
-
-            # ── Marketplace ───────────────────────
             "marketplace": {
                 "recommended_products": protocol["marketplace"]["recommended_products"],
-                "product_type":         protocol["marketplace"]["product_type"],
-                "note": "Contact your nearest Krishi Seva Kendra or AgriShop for availability.",
+                "product_type":         "Veterinary Medicine",
+                "note": "Available at Pashu Rakshak Market or nearest Vet Clinic.",
             },
 
-            # ── Location + time ───────────────────
+            "nearby_vets": [
+                {"name": "Pashu Chikitsalaya (Govt Vet)", "distance": "1.2 km", "contact": "0712-254XXX"},
+                {"name": "Nagpur Livestock Clinic", "distance": "3.5 km", "contact": "0712-289XXX"},
+                {"name": "Dr. Sharma's Cattle Care", "distance": "5.8 km", "contact": "98230XXXXX"}
+            ],
+
             "location": {
                 "lat": location[0] if location else None,
                 "lon": location[1] if location else None,
             },
             "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
-
-            # ── Top-K alternatives ────────────────
             "top_k_predictions": top_k or [],
         }
 
@@ -439,27 +474,22 @@ class IntelligenceEngine:
             return f"⚠️ Weather data unavailable ({e}). Manual monitoring recommended."
 
     def _static_weather_advice(self, disease_key: str) -> str:
-        """Context-aware static advice when no live weather data available."""
+        """Context-aware static advice for cattle health."""
         key_lower = disease_key.lower()
-        if any(k in key_lower for k in _FUNGAL_KEYWORDS) and "healthy" not in key_lower:
+        if "anthrax" in key_lower:
             return (
-                "🌧️ Fungal diseases thrive in humid, wet conditions. "
-                "Spray fungicide in early morning (6–9 AM) for best absorption. "
-                "Avoid spraying if rain is expected within 4 hours."
+                "🌡️ Heat accelerates bacterial spread. Isolate affected cattle "
+                "in a cool, shaded area. Ensure fresh water is available "
+                "and avoid movement to prevent further contamination."
             )
-        if any(k in key_lower for k in _VIRAL_KEYWORDS):
+        if "foot_and_mouth" in key_lower:
             return (
-                "🦟 Viral disease vectors (whiteflies, aphids) are most active in hot, dry weather. "
-                "Install yellow sticky traps. Spray insecticide in evening to protect beneficial insects."
-            )
-        if any(k in key_lower for k in _PEST_KEYWORDS):
-            return (
-                "🌡️ Spider mites thrive in hot, dry weather. "
-                "Increase irrigation frequency and spray miticide in early morning."
+                "🌧️ Wet conditions worsen hoof lesions. Keep cattle on dry, "
+                "elevated ground. Disinfect grazing areas if rain is expected."
             )
         if "healthy" in key_lower:
-            return "☀️ Plant is healthy. Continue good agronomic practices. Monitor weather for disease-favorable conditions."
-        return "🌤️ Apply treatments in calm, dry conditions. Early morning or late evening is best for spray applications."
+            return "☀️ Cattle appears healthy. Maintain regular vaccination schedules and clean water supply."
+        return "🌤️ Ensure proper ventilation in sheds. Monitor for signs of heat stress during peak afternoon hours."
 
     def _dynamic_weather_advice(
         self, rain_expected: bool, avg_temp: float, avg_humidity: float, disease_key: str

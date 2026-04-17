@@ -73,6 +73,7 @@ async def health():
 @app.post(f"{API_PREFIX}/predict")
 async def predict(
     file: UploadFile = File(...),
+    query: Optional[str] = Form(None),
     location_lat: Optional[float] = Form(None),
     location_lon: Optional[float] = Form(None),
     crop_area: float = Form(1.0),
@@ -98,6 +99,7 @@ async def predict(
             disease_key=disease_key,
             confidence=confidence,
             location=location,
+            user_query=query,
             crop_area_acres=crop_area,
             market_price_rs_per_quintal=market_price,
             top_k_predictions=top_k
