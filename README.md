@@ -1,4 +1,4 @@
-# Pashu Rakshak AI (पशु रक्षक) 🐄
+# PashuRakshak AI (पशुरक्षक) 🐄
 **Intelligent Livestock Healthcare & Diagnostic Ecosystem**
 
 Pashu Rakshak AI is a comprehensive platform designed to empower farmers with instant livestock disease diagnostics, health tracking, and resource management. By integrating state-of-the-art AI inference with high-performance mobile and web interfaces, we aim to modernize animal husbandry and reduce economic losses for farmers.
