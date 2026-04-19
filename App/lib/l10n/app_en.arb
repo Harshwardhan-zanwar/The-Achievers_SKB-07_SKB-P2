@@ -1,0 +1,29 @@
+{
+  "@@locale": "en",
+  "appTitle": "Pashu Rakshak AI",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  "home": "Home",
+  "scanner": "Scanner",
+  "marketplace": "Marketplace",
+  "prices": "Prices",
+  "more": "More",
+  "goodMorning": "Good Morning",
+  "farmer": "Farmer",
+  "weatherIntelligence": "Weather Intelligence",
+  "cattleCount": "Cattle Count",
+  "healthAlerts": "Health Alerts",
+  "recentScans": "Recent Scans (Local)",
+  "language": "Language",
+  "selectLanguage": "Select Language",
+  "english": "English",
+  "hindi": "Hindi",
+  "marathi": "Marathi",
+  "firstAid": "First Aid",
+  "actionPlan": "Action Plan",
+  "nearbyVets": "Nearby Vets",
+  "confidence": "Confidence",
+  "urgency": "Urgency",
+  "days": "days"
+}
