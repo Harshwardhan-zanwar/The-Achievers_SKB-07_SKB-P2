@@ -1,0 +1,11 @@
+name,price,description,imageName,trend,change
+Milk (1L),₹60,Premium whole milk,milk.jpg,up,₹2
+Curd (1kg),₹80,Fresh creamy curd,curd.jpg,stable,0
+Butter (500g),₹250,Pure grass-fed butter,butter.jpg,up,₹5
+Ghee (1L),₹600,Traditional A2 Ghee,ghee.jpg,up,₹15
+Paneer (1kg),₹350,Fresh cottage cheese,paneer.jpg,stable,0
+Cheese (200g),₹150,Processed dairy cheese,cheese.jpg,stable,0
+Buttermilk (1L),₹40,Spiced refreshing drink,buttermilk.jpg,down,₹1
+Flavored Milk,₹50,Rich chocolate/badam milk,flavoured_milk.jpg,up,₹1
+Milk Powder (1kg),₹400,Skimmed milk powder,milk_powder.jpg,stable,0
+Organic Milk (1L),₹90,Pesticide-free raw milk,organic_milk.jpg,up,₹4

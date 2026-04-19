@@ -1,0 +1,73 @@
+{
+  "class_names": [
+    "Anthrax",
+    "Foot_and_Mouth_Disease",
+    "Healthy_Cattle"
+  ],
+  "protocols": {
+    "Anthrax": {
+      "display_name": "Anthrax",
+      "crop": "Cattle",
+      "first_aid": "🚨 Anthrax is a serious infectious disease. DO NOT TOUCH the animal or its carcass. Contact a veterinarian immediately. This disease can spread to humans.",
+      "action_plan": [
+        "Isolate the infected animal immediately from the herd.",
+        "Stop all movements of animals and people from the farm.",
+        "Burn or deeply bury any carcasses with lime as per local regulations.",
+        "Contact the local district veterinary officer immediately.",
+        "Vaccinate all healthy animals in the surrounding area."
+      ],
+      "yield_loss_pct": 100,
+      "economic_loss_per_acre_rs": 50000,
+      "marketplace": {
+        "recommended_products": [
+          "Anthrax Spore Vaccine",
+          "Bactericidal disinfectants (for premises)"
+        ],
+        "product_type": "Emergency Veterinary Support"
+      }
+    },
+    "Foot_and_Mouth_Disease": {
+      "display_name": "Foot and Mouth Disease (FMD)",
+      "crop": "Cattle",
+      "first_aid": "Wash the animal's mouth and feet with a mild antiseptic solution like Potassium Permanganate (1:1000). Keep the animal in a soft, dry place.",
+      "action_plan": [
+        "Isolate infected animals from the rest of the herd.",
+        "Apply boroglycerine or honey to mouth lesions.",
+        "Treat foot lesions with an antibiotic spray or cream to prevent secondary infections.",
+        "Provide soft, easily digestible food and plenty of clean water.",
+        "Ensure all other animals are vaccinated with the FMD vaccine."
+      ],
+      "yield_loss_pct": 40,
+      "economic_loss_per_acre_rs": 15000,
+      "marketplace": {
+        "recommended_products": [
+          "FMD Vaccine (Raksha-FMD)",
+          "Potassium Permanganate",
+          "Topical Antibiotic Sprays"
+        ],
+        "product_type": "Supportive Care"
+      }
+    },
+    "Healthy_Cattle": {
+      "display_name": "Healthy Cattle",
+      "crop": "Cattle",
+      "first_aid": "✅ Your animal appears healthy. No immediate treatment required.",
+      "action_plan": [
+        "Maintain regular vaccination schedules (FMD, Anthrax, Brucellosis).",
+        "Ensure a balanced diet with proper minerals and clean water.",
+        "Practice good hygiene in the cattle shed.",
+        "Conduct regular deworming (every 6 months)."
+      ],
+      "yield_loss_pct": 0,
+      "economic_loss_per_acre_rs": 0,
+      "marketplace": {
+        "recommended_products": [
+          "Mineral Mixtures",
+          "Deworming tablets",
+          "Cattle Feed supplements"
+        ],
+        "product_type": "Preventive Care"
+      }
+    }
+  }
+}

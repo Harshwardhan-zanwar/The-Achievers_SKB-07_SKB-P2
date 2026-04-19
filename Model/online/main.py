@@ -44,7 +44,12 @@ app.add_middleware(
 
 # API Prefix
 API_PREFIX = "/api/v1"
-AUDIO_DIR = "static/audio"
+
+# Resolve absolute path to the current directory for reliable file loading
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROTOCOLS_PATH = os.path.join(BASE_DIR, "disease_protocols.json")
+AUDIO_DIR = os.path.join(BASE_DIR, "static", "audio")
+
 os.makedirs(AUDIO_DIR, exist_ok=True)
 
 app.mount("/audio", StaticFiles(directory=AUDIO_DIR), name="audio")
@@ -58,7 +63,7 @@ async def startup_event():
     global model, engine
     try:
         model = get_model()
-        engine = IntelligenceEngine(protocols_path="disease_protocols.json")
+        engine = IntelligenceEngine(protocols_path=PROTOCOLS_PATH)
         logger.info("✅ All systems initialized successfully")
     except Exception as e:
         logger.error(f"❌ Initialization Error: {e}")
@@ -82,7 +87,8 @@ async def predict(
     location_lat: Optional[float] = Form(None),
     location_lon: Optional[float] = Form(None),
     crop_area: float = Form(1.0),
-    market_price: float = Form(1500.0)
+    market_price: float = Form(1500.0),
+    language: str = Form("English")
 ):
     """
     Cattle Disease Prediction Endpoint.
@@ -91,16 +97,21 @@ async def predict(
         raise HTTPException(status_code=503, detail="Model or Intelligence Engine not loaded.")
 
     try:
+        logger.info(f"Received predict request: file={'Yes' if file else 'No'}, query={'Yes' if query else 'No'}")
+        
         # 1. Model Inference (Only if image provided)
         disease_key = "Healthy_Cattle"
         confidence = 0.95
         top_k = []
         status_msg = "Voice Consult"
         
-        if file and file.filename:
+        if file and file.filename and len(await file.read()) > 0:
+            await file.seek(0) # Reset stream after reading for length check
             image_bytes = await file.read()
             disease_key, confidence, top_k, status_msg = model.predict(image_bytes)
-        elif not query:
+        elif query and len(query.strip()) > 0:
+            status_msg = "Voice Analysis"
+        else:
              raise HTTPException(status_code=400, detail="Either image or voice query must be provided.")
         
         # 2. Intelligence Layer
@@ -113,7 +124,8 @@ async def predict(
             user_query=query,
             crop_area_acres=crop_area,
             market_price_rs_per_quintal=market_price,
-            top_k_predictions=top_k
+            top_k_predictions=top_k,
+            language=language
         )
         
         # 3. Add quality validation message
@@ -129,6 +141,9 @@ async def predict(
 
         return JSONResponse(content=result)
 
+    except HTTPException as he:
+        # Re-raise HTTPExceptions (like the 400 we just raised)
+        raise he
     except Exception as e:
         logger.error(f"Prediction Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

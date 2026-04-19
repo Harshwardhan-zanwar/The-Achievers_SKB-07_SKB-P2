@@ -1,46 +1,32 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
+import '../../services/market_data_service.dart';
 
-class PricesView extends StatelessWidget {
+class PricesView extends StatefulWidget {
   const PricesView({super.key});
 
-  final List<Map<String, dynamic>> _dairyProducts = const [
-    {
-      'name': 'Fresh Cow Milk',
-      'price': '₹55/L',
-      'trend': 'up',
-      'change': '+₹2',
-      'image': 'https://images.unsplash.com/photo-1550583724-125581f778d3?q=80&w=400',
-    },
-    {
-      'name': 'Buffalo Milk',
-      'price': '₹75/L',
-      'trend': 'up',
-      'change': '+₹5',
-      'image': 'https://images.unsplash.com/photo-1563636619-e910ef4a958b?q=80&w=400',
-    },
-    {
-      'name': 'Desi Ghee',
-      'price': '₹650/kg',
-      'trend': 'down',
-      'change': '-₹10',
-      'image': 'https://plus.unsplash.com/premium_photo-1695230432321-4f1659938b8d?q=80&w=400',
-    },
-    {
-      'name': 'Fresh Paneer',
-      'price': '₹350/kg',
-      'trend': 'stable',
-      'change': '0',
-      'image': 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?q=80&w=400',
-    },
-    {
-      'name': 'Curd (Dahi)',
-      'price': '₹90/kg',
-      'trend': 'up',
-      'change': '+₹3',
-      'image': 'https://images.unsplash.com/photo-1485962391945-424240a5a3bc?q=80&w=400',
-    },
-  ];
+  @override
+  State<PricesView> createState() => _PricesViewState();
+}
+
+class _PricesViewState extends State<PricesView> {
+  List<MarketItem> _products = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrices();
+  }
+
+  Future<void> _loadPrices() async {
+    final items = await MarketDataService.loadItems('prices');
+    if (mounted) {
+      setState(() {
+        _products = items;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,21 +65,22 @@ class PricesView extends StatelessWidget {
               const SizedBox(height: 16),
 
               // Product Grid
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.8,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                ),
-                itemCount: _dairyProducts.length,
-                itemBuilder: (context, index) {
-                  final product = _dairyProducts[index];
-                  return _buildPriceCard(product);
-                },
-              ),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: Colors.blueAccent))
+                  : GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 0.8,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                      ),
+                      itemCount: _products.length,
+                      itemBuilder: (context, index) {
+                        return _buildPriceCard(_products[index]);
+                      },
+                    ),
               const SizedBox(height: 30),
 
               // Market Trends Card (Simplified)
@@ -159,10 +146,9 @@ class PricesView extends StatelessWidget {
     );
   }
 
-  Widget _buildPriceCard(Map<String, dynamic> product) {
-    bool isUp = product['trend'] == 'up';
-    bool isDown = product['trend'] == 'down';
-    
+  Widget _buildPriceCard(MarketItem product) {
+    const String assetPath = "assets/images/prices/";
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
@@ -175,13 +161,13 @@ class PricesView extends StatelessWidget {
           Expanded(
             child: ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              child: Image.network(
-                product['image'],
+              child: Image.asset(
+                "$assetPath${product.imageName}",
                 fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(color: Colors.white10, child: const Center(child: CircularProgressIndicator(strokeWidth: 2)));
-                },
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: Colors.white10,
+                  child: const Icon(Icons.shopping_bag_outlined, color: Colors.white24),
+                ),
               ),
             ),
           ),
@@ -190,13 +176,13 @@ class PricesView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(product['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(product.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
                 const SizedBox(height: 4),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(product['price'], style: const TextStyle(color: Colors.greenAccent, fontSize: 16, fontWeight: FontWeight.bold)),
-                    _buildTrendBadge(product['trend'], product['change']),
+                    Text(product.price, style: const TextStyle(color: Colors.greenAccent, fontSize: 16, fontWeight: FontWeight.bold)),
+                    _buildTrendBadge(product.trend ?? 'stable', product.change ?? '0'),
                   ],
                 ),
               ],

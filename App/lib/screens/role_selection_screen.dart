@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'login_screen.dart';
-import 'signup_screen.dart';
-import 'dashboard_screen.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -61,11 +59,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 ),
                 const SizedBox(height: 20),
                 _buildRoleCard(
-                  title: 'Admin',
-                  description: 'Oversee operations, manage users, and view analytics.',
-                  icon: Icons.admin_panel_settings,
-                  isSelected: selectedRole == 'Admin',
-                  onTap: () => setState(() => selectedRole = 'Admin'),
+                  title: 'Veterinarian',
+                  description: 'Manage clinical appointments, track patient health, and provide pro care.',
+                  icon: Icons.medical_services_outlined,
+                  isSelected: selectedRole == 'Veterinarian',
+                  onTap: () => setState(() => selectedRole = 'Veterinarian'),
                 ),
                 const Spacer(),
                 AnimatedOpacity(

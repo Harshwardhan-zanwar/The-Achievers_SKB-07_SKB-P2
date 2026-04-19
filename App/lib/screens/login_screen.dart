@@ -36,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (context) => const MainShellScreen()),
+      MaterialPageRoute(builder: (context) => MainShellScreen(userRole: widget.role)),
       (route) => false,
     );
   }
@@ -45,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
     // Instantly bypasses email verifications for Google/Apple signins
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (context) => const MainShellScreen()),
+      MaterialPageRoute(builder: (context) => MainShellScreen(userRole: widget.role)),
       (route) => false,
     );
   }

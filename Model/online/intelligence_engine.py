@@ -315,6 +315,7 @@ class IntelligenceEngine:
         crop_area_acres:             float = 1.0,
         market_price_rs_per_quintal: float = 1500.0,
         top_k_predictions:           Optional[List[Dict]] = None,
+        language:                    str = "English"
     ) -> Dict[str, Any]:
         """
         Full pipeline: model output → intelligence → validation → consistent result.
@@ -339,7 +340,7 @@ class IntelligenceEngine:
         # Build raw result from protocols
         raw = self._build_raw_result(
             disease_key, confidence, protocol, location,
-            crop_area_acres, market_price_rs_per_quintal, top_k_predictions, user_query
+            area_acres, market_price_rs_per_quintal, top_k_predictions, user_query, language
         )
 
         # Validate & correct for consistency
@@ -363,6 +364,7 @@ class IntelligenceEngine:
         market_price:  float,
         top_k:         Optional[List[Dict]],
         user_query:    Optional[str] = None,
+        language:      str = "English"
     ) -> Dict[str, Any]:
         economic = self._compute_economic_impact(protocol, area_acres, market_price)
         weather  = self._get_weather_advice(location, disease_key)
